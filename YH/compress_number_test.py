@@ -6,32 +6,30 @@
 import binascii
 import struct
 
-# Original msg: Regular payload plus a prefix
-msg = "R 19 259 1 21 2.23041 102.67982 4 0 10"
+# Original msg: Regular payload plus a 'R' prefix (if we plan to prefix our regular payloads)
+msg = "R 19 259 1 21 2 2304 102 6798 4 0 10"
 print ("original msg: " + msg)
 print ("original msg length: " + str(len(msg)))
 
 # Now spilt the msg into a list (can we tell the despatcher node to send us a list instead of a string...?)
 # E.g. create a new topic specially for sbd node, and pass msg as a special ros msg
 li = msg.split(" ")
-list_size = len(li)
+li_size = len(li)
 
-# Hardcoding because no apparent pattern in regular payload
-# Any way to move away from hardcoding? Looks like it's not a very good idea to pass everything to the link nodes as strings
+# Preparing the prefix (which is a character)
 li[0] = li[0].encode()
-li[1] = int(li[1])
-li[2] = int(li[2])
-li[3] = int(li[3])
-li[4] = int(li[4])
-li[5] = float(li[5])
-li[6] = float(li[6])
-li[7] = int(li[7])
-li[8] = int(li[8])
-li[9] = int(li[9])
+struct_cmd = 's'
 
-s = struct.Struct('s h h h h f f h h h')
+# Preparing the rest of the payload (which are all short ints) 
+i = 1 # Start from index 1
+while i < li_size:
+	struct_cmd = struct_cmd + ' h'
+	li[i] = int(li[i])
+	i = i + 1
+
+s = struct.Struct(struct_cmd)
 packed_data = s.pack(*li)
-print("packed msg: " + str(packed_data))
+print(packed_data)
 print("packed msg length " + str(s.size))
 
-# 38 byte regular payload in text format becomes 26 bytes in compressed format. Yay!
+# 38 byte regular payload in text format becomes 24 bytes in compressed format. Yay!
